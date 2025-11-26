@@ -1,0 +1,41 @@
+services:
+  # 1. Serviço do Banco de Dados PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: flowharmony-postgres
+    restart: always
+    environment:
+      # Credenciais do Banco de Dados
+      POSTGRES_USER: careplus_user
+      POSTGRES_PASSWORD: careplus_password
+      POSTGRES_DB: careplus_db
+    ports:
+      # Mapeia a porta do container (5432) para a porta local (5432)
+      - "5432:5432"
+    volumes:
+      # Persiste os dados no volume 'postgres_data'
+      - postgres_data:/var/lib/postgresql/data
+      
+  # 2. Serviço da Aplicação Spring Boot
+  app:
+    build: .  # Constrói a imagem Docker a partir do Dockerfile na pasta atual
+    container_name: flowharmony-app
+    restart: on-failure
+    ports:
+      # Mapeia a porta da aplicação (8080) para a porta local (8080)
+      - "8080:8080"
+    environment:
+      # Configurações do Spring Boot para se conectar ao PostgreSQL
+      # O hostname é o nome do serviço (postgres)
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/careplus_db
+      SPRING_DATASOURCE_USERNAME: careplus_user
+      SPRING_DATASOURCE_PASSWORD: careplus_password
+      # Garante que o Flyway rode as migrations
+      SPRING_FLYWAY_ENABLED: "true"
+    depends_on:
+      # Garante que o PostgreSQL inicie antes da aplicação
+      - postgres
+
+# Volumes para persistência de dados
+volumes:
+  postgres_data:
